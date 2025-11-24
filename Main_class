@@ -1,0 +1,206 @@
+package bank;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Scanner;
+
+public class MainClass1 {
+
+	public static void main(String[] args) {
+		String url = "jdbc:mysql://localhost:3306/HOTEL"; // MySQL database driver file
+        String user = "root";                              // MySQL username
+        String password = "Pranita";                          // MySQL password
+
+        Scanner sc = new Scanner(System.in);
+        Connection con = null;
+
+        try {
+            // 1. Loading the JDBC drDriver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            
+            // 2. Establishe the cinnection
+            con = DriverManager.getConnection(url, user, password);
+            System.out.println(" Connected to MySQL Database HOTEL!");
+
+            int choice;
+            do {
+                System.out.println("\nHOTEL MANAGEMENT MENU");
+                System.out.println("1. Book Room (Check)");
+                System.out.println("2. View Room Status");
+                System.out.println("3. Check Out (Make Room Available)");
+                System.out.println("4. Change Guest Name");
+                System.out.println("5. Delete Room Record (permanent)");
+                System.out.println("6.Data inserted successfully");
+                System.out.println("7. Exit");
+                System.out.print("Enter your choice: ");
+                
+                // Input handling for the choice
+                if (sc.hasNextInt()) {
+                    choice = sc.nextInt();
+                } else {
+                    System.out.println("Invalid input. Please enter a number.");
+                    sc.next(); // step into the invalid input
+                    choice = 0;
+                    continue;
+                }
+                sc.nextLine(); // step the newline
+
+                switch (choice) {
+                    // --- Case 1: Book Room  ---
+                    case 1 : {
+                        System.out.print("Enter Room Number to Book: ");
+                        int roomNo = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter Guest Name: ");
+                        String name = sc.nextLine();
+
+                        // SQL to update room status to booked and assign guest name
+                        String update = "UPDATE hotel_rooms SET guest_name = ?, is_booked = TRUE WHERE room_number = ? AND is_booked = FALSE";
+                        PreparedStatement ps = con.prepareStatement(update);
+                        ps.setString(1, name);
+                        ps.setInt(2, roomNo);
+                        
+                        int rows = ps.executeUpdate();
+                        if (rows > 0) {
+                            System.out.println(" Room " + roomNo + " booked successfully for " + name + "!");
+                        } else {
+                            // Check if the room exists but is already booked
+                            String check = "SELECT room_number FROM hotel_rooms WHERE room_number = ?";
+                            PreparedStatement checkPs = con.prepareStatement(check);
+                            checkPs.setInt(1, roomNo);
+                            ResultSet rs = checkPs.executeQuery();
+                            
+                            if (rs.next()) {
+                                System.out.println(" Room " + roomNo + " is already occupied or doesn't exist.");
+                            } else {
+                                System.out.println(" Room " + roomNo + " not found in the system.");
+                            }
+                        }
+                    }
+
+                    // --- Case 2: View Room Status is available or not ---
+                    case 2 : {
+                        System.out.print("Enter Room Number to view: ");
+                        int roomNo = sc.nextInt();
+                        
+                        String query = "SELECT room_number, guest_name, is_booked FROM hotel_rooms WHERE room_number = ?";
+                        PreparedStatement ps = con.prepareStatement(query);
+                        ps.setInt(1, roomNo);
+                        ResultSet rs = ps.executeQuery();
+
+                        System.out.println("\nRoom_Number | Is_Booked | Guest_Name");
+                        System.out.println("------------------------------------------");
+                        if (rs.next()) {
+                        	String status=rs.getBoolean("isbooked") ? ("booked")  :"available";
+                            String guest = rs.getString("guest_name");
+                            // Display 'N/A' if the room is available
+                            String displayGuest = rs.getBoolean("is_booked") ? guest : "N/A";
+
+                            System.out.println(rs.getInt("room_number") + " | " +
+                                               status + " | " +
+                                               displayGuest);
+                        } else {
+                            System.out.println(" Room not found!");
+                        }
+                    }
+
+                    // --- Case 3: Check Out (Make Room Available) ---
+                    case 3 : {
+                        System.out.print("Enter Room Number to Check Out: ");
+                        int roomNo = sc.nextInt();
+
+                        // SQL to set the room to 'is_booked = FALSE' and clear the guest name
+                        String update = "UPDATE hotel_rooms SET guest_name = NULL, is_booked = FALSE WHERE room_number = ? AND is_booked = TRUE";
+                        PreparedStatement ps = con.prepareStatement(update);
+                        ps.setInt(1, roomNo);
+                        int rows = ps.executeUpdate();
+                        
+                        System.out.println(rows > 0 ? " Room " + roomNo + " checked out successfully. Now available. ✅" : " Room " + roomNo + " was not booked or not found!");
+                    }
+
+                    // --- Case 4: Change Guest Name (Similar to updating balance) ---
+                    case 4 : {
+                        System.out.print("Enter Room Number: ");
+                        int roomNo = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter NEW Guest Name: ");
+                        String newName = sc.nextLine();
+
+                        // SQL to update only the guest name, only if the room is currently booked
+                        String update = "UPDATE hotel_rooms SET guest_name = ? WHERE room_number = ? AND is_booked = TRUE";
+                        PreparedStatement ps = con.prepareStatement(update);
+                        ps.setString(1, newName);
+                        ps.setInt(2, roomNo);
+                        int rows = ps.executeUpdate();
+                        
+                        System.out.println(rows > 0 ? " Guest name updated successfully to " + newName + "!" : " Room " + roomNo + " not found or is not currently booked!");
+                    }
+
+                    // Case 5: Delete Room Record
+                    case 5 : {
+                        System.out.print("Enter Room Number to DELETE (Permanent Removal): ");
+                        int roomNo = sc.nextInt();
+
+                        String delete = "DELETE FROM hotel_rooms WHERE room_number = ?";
+                        PreparedStatement ps = con.prepareStatement(delete);
+                        ps.setInt(1, roomNo);
+                        int rows = ps.executeUpdate();
+                        
+                        System.out.println(rows > 0 ? "Room " + roomNo + " record deleted from the system." : " Room not found!");
+                    }
+                    //insert new data into the my sql table
+                    case 6: {
+                        System.out.print("Enter Room Number: ");
+                        int roomNo = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("Enter Guest Name: ");
+                        String guest = sc.nextLine();
+
+                        String insert = "INSERT INTO hotel_rooms (room_number, guest_name, is_booked) VALUES (?, ?, TRUE)";
+                        PreparedStatement ps = con.prepareStatement(insert);
+
+                        ps.setInt(1, roomNo);
+                        ps.setString(2, guest);
+
+                        int rows = ps.executeUpdate();
+                        if (rows > 0) {
+                            System.out.println("Guest " + guest + " inserted successfully!");
+                        } else {
+                            System.out.println("Insert failed!");
+                        }
+                    }
+
+                    case 7:
+                    {
+                    	System.out.println(" Invalid choice! Please enter a number from 1 to 7.");
+                    }
+                }
+                
+            } while (choice != 7);
+
+        } catch (SQLException e) {
+            System.err.println("Database Error occurred: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.err.println("MySQL JDBC Driver not found. Check your classpath.");
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred: " + e.getMessage());
+        } finally {
+            // 3. Close resources in a finally block
+            try {
+                if (con != null) {
+                    con.close();
+                }
+                sc.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
+
+	}
+
+}
