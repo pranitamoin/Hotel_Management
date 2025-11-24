@@ -1,0 +1,12 @@
+package bank;
+import java.sql.*;
+
+public class DatabaseConnection {
+
+    public static Connection DbConnection() throws Exception {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/HOTEL","root","Pranita");
+        return con;
+    }
+}
