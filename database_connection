@@ -1,0 +1,17 @@
+CREATE DATABASE HOTEL;
+USE HOTEL;
+CREATE TABLE hotel_rooms (
+    room_number INT PRIMARY KEY,
+    guest_name VARCHAR(100),
+    is_booked BOOLEAN DEFAULT FALSE
+);
+INSERT INTO hotel_rooms (room_number, guest_name, is_booked) VALUES
+(101, NULL, FALSE),
+(102, NULL, FALSE),
+(103, NULL, FALSE),
+(104, NULL, FALSE),
+(105, NULL, FALSE);
+select*from hotel_rooms;
+select*from hotel_rooms where room_number=102;
+
+
