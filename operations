@@ -1,0 +1,134 @@
+package bank;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+
+public class HotelOperationClass {
+
+    private Connection con;
+
+   
+    public HotelOperationClass(Connection con) {
+        this.con = con;
+    }
+
+  
+    public String bookRoom(int roomNo, String name) {
+        String update = "UPDATE hotel_rooms SET guest_name = ?, is_booked = TRUE WHERE room_number = ? AND is_booked = FALSE";
+        String check = "SELECT is_booked FROM hotel_rooms WHERE room_number = ?";
+
+        try (PreparedStatement checkPs = con.prepareStatement(check)) {
+            checkPs.setInt(1, roomNo);
+            ResultSet rs = checkPs.executeQuery();
+
+            if (rs.next()) {
+                // Room exists
+                if (rs.getBoolean("is_booked")) {
+                    return " Room " + roomNo + " is already occupied.";
+                } else {
+                    // Room is available, proceed with booking
+                    try (PreparedStatement updatePs = con.prepareStatement(update)) {
+                        updatePs.setString(1, name);
+                        updatePs.setInt(2, roomNo);
+                        int rows = updatePs.executeUpdate();
+                        if (rows > 0) {
+                            return " Room " + roomNo + " booked successfully for " + name + "!";
+                        } else {
+                            return "Booking failed for an unknown reason."; 
+                        }
+                    }
+                }
+            } else {
+                // Room does not exist
+                return " Room " + roomNo + " not found in the system.";
+            }
+        } catch (SQLException e) {
+            return "Database error during booking: " + e.getMessage();
+        }
+    }
+
+    
+    public void viewRoomStatus(int roomNo) {
+        String query = "SELECT room_number, guest_name, is_booked FROM hotel_rooms WHERE room_number = ?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, roomNo);
+            ResultSet rs = ps.executeQuery();
+
+           
+
+            if (rs.next()) {
+                if (rs.getBoolean("is_booked")) {
+				}
+                rs.getString("guest_name");
+                if (rs.getBoolean("is_booked")) {
+				}
+
+               
+            } else {
+             
+            }
+           
+        } catch (SQLException e) {
+            return;
+        }
+    }
+
+   
+    public String checkOutRoom(int roomNo) {
+        String update = "UPDATE hotel_rooms SET guest_name = NULL, is_booked = FALSE WHERE room_number = ? AND is_booked = TRUE";
+        try (PreparedStatement ps = con.prepareStatement(update)) {
+            ps.setInt(1, roomNo);
+            int rows = ps.executeUpdate();
+            return (rows > 0) ? " Room " + roomNo + " checked out successfully. Now available. ✅" : " Room " + roomNo + " was not booked or not found!";
+        } catch (SQLException e) {
+            return "Database error during check-out: " + e.getMessage();
+        }
+    }
+
+    
+    public String changeGuestName(int roomNo, String newName) {
+        String update = "UPDATE hotel_rooms SET guest_name = ? WHERE room_number = ? AND is_booked = TRUE";
+        try (PreparedStatement ps = con.prepareStatement(update)) {
+            ps.setString(1, newName);
+            ps.setInt(2, roomNo);
+            int rows = ps.executeUpdate();
+            return (rows > 0) ? " Guest name updated successfully to " + newName + "!" : " Room " + roomNo + " not found or is not currently booked!";
+        } catch (SQLException e) {
+            return "Database error changing guest name: " + e.getMessage();
+        }
+    }
+
+    
+    public String deleteRoom(int roomNo) {
+        String delete = "DELETE FROM hotel_rooms WHERE room_number = ?";
+        try (PreparedStatement ps = con.prepareStatement(delete)) {
+            ps.setInt(1, roomNo);
+            int rows = ps.executeUpdate();
+            return (rows > 0) ? "Room " + roomNo + " record deleted from the system." : " Room not found!";
+        } catch (SQLException e) {
+            return "Database error deleting room: " + e.getMessage();
+        }
+    }
+
+   
+    public String insertNewRoom(int roomNo, String guest) {
+        String insert = "INSERT INTO hotel_rooms (room_number, guest_name, is_booked) VALUES (?, ?, TRUE)";
+        try (PreparedStatement ps = con.prepareStatement(insert)) {
+            ps.setInt(1, roomNo);
+            ps.setString(2, guest);
+            int rows = ps.executeUpdate();
+            return (rows > 0) ? "Guest " + guest + " inserted successfully for room " + roomNo + "!" : "Insert failed!";
+        } catch (SQLException e) {
+            
+                return "Error: Room number " + roomNo + " already exists.";
+            }
+           
+        }
+    public void Exit() {
+    	System.out.println("Invalid Choice..Please enter the choice from 1 to 7");
+    	
+    }
+    }
